@@ -16,7 +16,7 @@ password = os.environ["CAU_PASSWORD"]
 resend.api_key = os.environ["RESEND_API_KEY"]
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True, channel="chrome")
+    browser = p.chromium.launch(headless=True)
     page = browser.new_page()
 
     # 登录
@@ -25,27 +25,38 @@ with sync_playwright() as p:
     page.fill("#pd", password)
     page.click("#index_login_btn")
 
+
+    print("正在抓取校级通知...")
     page.goto("https://one.cau.edu.cn/tp_up/view?m=up#act=up/pim/allpim")
-
     page.wait_for_selector("div.tz-body-list")
-
     news_list: list[News] = []
-    
+    ciee_news_list : list[News] = []
     items = page.locator("div.tz-body-list").all()
-    
     for item in items:
         title = item.locator("a.tit").inner_text()
-        
         date = item.locator("p.pull-right-to-left span").last.inner_text()
-        
         news_list.append(News(
             title=title.strip(),
             date=date.strip()
         ))
-    news_list.sort(key=lambda x: x.date, reverse=True)
-    for news in news_list:
-        print(f"日期: {news.date} | 标题: {news.title}")
 
+    print("正在抓取信电学院通知...")
+    page.goto("https://ciee.cau.edu.cn/col/col50390/")
+    page.wait_for_selector(".list_box_list")
+    ciee_items = page.locator("ul.list_box_list div.default_pgContainer li").all()
+    for item in ciee_items:
+        title = item.locator("h5.overfloat-dot").inner_text().strip()
+        ym = item.locator(".time h6").inner_text().strip()
+        day = item.locator(".time h3").inner_text().strip().zfill(2)
+        full_date = f"{ym}-{day}"
+        ciee_news_list.append(News(title=title, date=full_date))
+    
+    news_list.sort(key=lambda x: x.date, reverse=True)
+    ciee_news_list.sort(key=lambda x: x.date, reverse=True)
+    for news in news_list:
+        print(f"学校通知: 日期: {news.date} | 标题: {news.title}")
+    for news in ciee_news_list:
+        print(f"信电通知: 日期: {news.date} | 标题: {news.title}")
     html_template = Template("""
         <h3>校内最新通知</h3>
         <ul>
@@ -53,8 +64,14 @@ with sync_playwright() as p:
             <li>[{{ news.date }}] {{ news.title }}</li>
             {% endfor %}
         </ul>
+        <h3>信电学院最新通知</h3>
+        <ul>
+            {% for news in ciee_news_list %}
+            <li>[{{ news.date }}] {{ news.title }}</li>
+            {% endfor %}
+        </ul>
     """)
-    email_body = html_template.render(news_list=news_list)
+    email_body = html_template.render(news_list=news_list, ciee_news_list=ciee_news_list)
 
     resend.Emails.send({
         "from": sender_email,
