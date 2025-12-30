@@ -1,0 +1,31 @@
+name: Daily News
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: install Playwright browsers
+        run: playwright install chromium
+
+      - name: Run main.py
+        env:
+          CAU_USERNAME: ${{ secrets.CAU_USERNAME }}
+          CAU_PASSWORD: ${{ secrets.CAU_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: uv run main.py

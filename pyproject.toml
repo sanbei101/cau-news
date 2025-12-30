@@ -1,0 +1,11 @@
+[project]
+name = "cau-news"
+version = "1.0.0"
+description = "农大官网通知爬取和邮件推送"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "jinja2>=3.1.6",
+    "playwright>=1.57.0",
+    "resend>=2.19.0",
+]
