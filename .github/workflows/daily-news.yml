@@ -24,7 +24,7 @@ jobs:
         run: uv sync
 
       - name: install Playwright browsers
-        run: playwright install chromium
+        run: uv run playwright install chromium
 
       - name: Run main.py
         env:
