@@ -12,7 +12,7 @@ jobs:
       contents: write
     steps:
       - name: Auto-approve and merge dependabot PRs
-      - run: |
+        run: |
           gh pr review --approve "$PR_URL"
           gh pr merge --squash --auto "$PR_URL"
         env:
