@@ -1,19 +1,17 @@
 import os
 from playwright.sync_api import sync_playwright
 from dataclasses import dataclass
-from jinja2 import Template
-import resend
+import requests
 
 @dataclass
 class News:
     title: str
     date: str
 
-sender_email = "news@mail.sanbei101.cn"
-receiver_email = "1317627853@qq.com"
+receiver_qq = "1317627853"
 username = os.environ["CAU_USERNAME"]                                                                                           
 password = os.environ["CAU_PASSWORD"]                                                                                           
-resend.api_key = os.environ["RESEND_API_KEY"]
+qq_bot_token = os.environ["QQ_BOT_TOKEN"]
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -57,26 +55,35 @@ with sync_playwright() as p:
         print(f"学校通知: 日期: {news.date} | 标题: {news.title}")
     for news in ciee_news_list:
         print(f"信电通知: 日期: {news.date} | 标题: {news.title}")
-    html_template = Template("""
-        <h3>校内最新通知</h3>
-        <ul>
-            {% for news in news_list %}
-            <li>[{{ news.date }}] {{ news.title }}</li>
-            {% endfor %}
-        </ul>
-        <h3>信电学院最新通知</h3>
-        <ul>
-            {% for news in ciee_news_list %}
-            <li>[{{ news.date }}] {{ news.title }}</li>
-            {% endfor %}
-        </ul>
-    """)
-    email_body = html_template.render(news_list=news_list, ciee_news_list=ciee_news_list)
+    
+    message_text = "[校内最新通知]\n"
+    for news in news_list:
+        message_text += f"- [{news.date}] {news.title}\n"
+    message_text += "\n[信电学院最新通知]\n"
+    for news in ciee_news_list:
+        message_text += f"- [{news.date}] {news.title}\n"
 
-    resend.Emails.send({
-        "from": sender_email,
-        "to": receiver_email,
-        "subject": f"校内新闻更新 - {len(news_list)}条",
-        "html": email_body,
-    })
+    headers = {
+        "Authorization": f"Bearer {qq_bot_token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "user_id": receiver_qq,
+        "message": [
+            {
+                "type": "text",
+                "data": {
+                    "text": message_text
+                }
+            }
+        ]
+    }
+
+    try:
+        response = requests.post("http://154.8.213.38:3001/send_private_msg", json=payload, headers=headers)
+        print(f"QQ消息发送状态码: {response.status_code}, 响应: {response.text}")
+    except Exception as e:
+        print(f"QQ消息发送失败: {e}")
+
     browser.close()

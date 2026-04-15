@@ -33,5 +33,6 @@ jobs:
         env:
           CAU_USERNAME: ${{ secrets.CAU_USERNAME }}
           CAU_PASSWORD: ${{ secrets.CAU_PASSWORD }}
+          QQ_BOT_TOKEN: ${{ secrets.QQ_BOT_TOKEN }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: uv run main.py
