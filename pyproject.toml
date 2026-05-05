@@ -7,5 +7,5 @@ requires-python = ">=3.13"
 dependencies = [
     "jinja2>=3.1.6",
     "playwright>=1.59.0",
-    "resend>=2.29.0",
+    "resend>=2.30.0",
 ]
